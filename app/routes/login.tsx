@@ -1,4 +1,4 @@
-import { Form } from '@remix-run/react';
+import { Form, Link } from '@remix-run/react';
 import { createUserSession, getAccessToken } from '../session.server';
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
 import { login } from '../user.server';
@@ -6,6 +6,9 @@ import { login } from '../user.server';
 export default function LoginPage() {
     return (
         <div id="detail">
+            <p>
+                No account? <Link to="/register">Register here</Link>
+            </p>
             <Form method="post">
                 <div>
                     <label htmlFor="email">
@@ -34,7 +37,7 @@ export default function LoginPage() {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const accessToken = await getAccessToken(request);
-    if (accessToken) return redirect('/');
+    if (accessToken) return redirect('/tasks');
     return json({});
 };
 

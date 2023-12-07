@@ -11,15 +11,30 @@ export type User = {
     email: string;
 };
 
+export async function register(name: string, email: string, password: string) {
+    try {
+        const response = await axios.post(`${apiUri}/auth/register`, {
+            name,
+            email,
+            password,
+        });
+
+        if (response.data.access_token) {
+            return response.data.access_token;
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+    return null;
+}
+
 export async function login(email: string, password: string) {
     try {
         const response = await axios.post(`${apiUri}/auth/login`, {
             email,
             password,
         });
-
-        // console.log('AAA');
-        // console.log(response.data);
 
         if (response.data.access_token) {
             return response.data.access_token;
@@ -38,8 +53,6 @@ export async function getUserByAccessToken(accessToken: string): Promise<User | 
                 Authorization: `Bearer ${accessToken}`,
             },
         });
-        // console.log('BBB');
-        // console.log(response.data);
 
         if (response.data._id) {
             return {

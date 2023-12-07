@@ -105,7 +105,7 @@ export default function Tasks() {
                             </ul>
                         ) : (
                             <p>
-                                <i>No contacts</i>
+                                <i>No tasks yet</i>
                             </p>
                         )}
                     </nav>
