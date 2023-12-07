@@ -12,6 +12,13 @@ export type TaskRecord = AddTaskDto & {
     createdAt: Date;
 };
 
+export type TaskCollection = {
+    tasks: TaskRecord[];
+    count: number;
+    skip: number;
+    limit: number;
+};
+
 export type TaskStatus = 'open' | 'closed';
 
 export type AddTaskDto = {
@@ -49,7 +56,6 @@ export const addTask = async (
             },
         });
 
-        console.log(response.data);
         return response.data;
     } catch (e) {
         console.log(e);
@@ -72,7 +78,6 @@ export const editTask = async (
             },
         });
 
-        console.log(response.data);
         return response.data;
     } catch (e) {
         console.log(e);
@@ -94,7 +99,6 @@ export const deleteTask = async (
             },
         });
 
-        console.log(response.data);
         return response.data;
     } catch (e) {
         console.log(e);
@@ -103,11 +107,15 @@ export const deleteTask = async (
     return;
 };
 
-export const getTasks = async (request: Request): Promise<TaskRecord[]> => {
+export const getTasks = async (
+    request: Request,
+    skip: number = 0,
+    limit: number = 5,
+): Promise<TaskCollection> => {
     const accessToken = await getAccessToken(request);
 
     try {
-        const response = await axios.get(`${apiUri}/tasks`, {
+        const response = await axios.get(`${apiUri}/tasks?skip=${skip}&limit=${limit}`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
@@ -118,7 +126,7 @@ export const getTasks = async (request: Request): Promise<TaskRecord[]> => {
         console.log(e);
     }
 
-    return [];
+    return { tasks: [], count: 0, skip: 0, limit: 0 };
 };
 
 export const getTask = async (
@@ -134,7 +142,6 @@ export const getTask = async (
             },
         });
 
-        console.log(response.data);
         return response.data;
     } catch (e) {
         console.log(e);

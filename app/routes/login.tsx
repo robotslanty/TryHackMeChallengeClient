@@ -1,39 +1,16 @@
 import { Form, Link } from '@remix-run/react';
 import { createUserSession, getAccessToken } from '../session.server';
-import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
+import {
+    ActionFunctionArgs,
+    LinksFunction,
+    LoaderFunctionArgs,
+    json,
+    redirect,
+} from '@remix-run/node';
 import { login } from '../user.server';
+import styles from '../styles/login.css';
 
-export default function LoginPage() {
-    return (
-        <div id="detail">
-            <p>
-                No account? <Link to="/register">Register here</Link>
-            </p>
-            <Form method="post">
-                <div>
-                    <label htmlFor="email">
-                        <span>Email address</span>
-                        <input id="email" required name="email" type="email" autoComplete="email" />
-                    </label>
-                </div>
-
-                <div>
-                    <label htmlFor="password">
-                        <span>Password</span>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autoComplete="current-password"
-                        />
-                    </label>
-                </div>
-
-                <button type="submit">Log in</button>
-            </Form>
-        </div>
-    );
-}
+export const links: LinksFunction = () => [{ rel: 'stylesheet', href: styles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const accessToken = await getAccessToken(request);
@@ -61,3 +38,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         accessToken,
     });
 };
+
+export default function LoginPage() {
+    return (
+        <main className="form-signin w-100 m-auto">
+            <p>
+                No account? <Link to="/register">Register here</Link>
+            </p>
+            <Form method="post">
+                <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
+                <div className="form-floating">
+                    <input
+                        type="email"
+                        name="email"
+                        className="form-control"
+                        id="floatingInput"
+                        placeholder="name@example.com"
+                    />
+                    <label htmlFor="floatingInput">Email address</label>
+                </div>
+                <div className="form-floating">
+                    <input
+                        type="password"
+                        name="password"
+                        className="form-control"
+                        id="floatingPassword"
+                        placeholder="Password"
+                    />
+                    <label htmlFor="floatingPassword">Password</label>
+                </div>
+                <button className="btn btn-primary w-100 py-2" type="submit">
+                    Sign in
+                </button>
+            </Form>
+        </main>
+    );
+}

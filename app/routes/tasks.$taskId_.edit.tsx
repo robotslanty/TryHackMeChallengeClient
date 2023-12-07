@@ -65,36 +65,61 @@ export default function EditTask() {
     const navigate = useNavigate();
 
     return (
-        <Form id="contact-form" method="post">
-            <p>
-                <span>Title</span>
+        <Form method="post">
+            <div className="mb-3">
+                <label htmlFor="title" className="form-label">
+                    Title
+                </label>
                 <input
                     defaultValue={task.title}
                     aria-label="Title"
+                    id="title"
                     name="title"
                     type="text"
                     placeholder="Title"
+                    className="form-control"
                 />
-            </p>
+            </div>
 
-            <label>
-                <span>Status</span>
-                <select name="status" defaultValue={task.status}>
+            <div className="mb-3">
+                <label htmlFor="status" className="form-label">
+                    Status
+                </label>
+
+                <select
+                    id="status"
+                    className="form-select"
+                    name="status"
+                    defaultValue={task.status}
+                >
                     <option value="open">Open</option>
                     <option value="closed">Closed</option>
                 </select>
-            </label>
+            </div>
 
-            <label>
-                <span>Description</span>
-                <textarea defaultValue={task.description} name="description" rows={6} />
-            </label>
-            <p>
-                <button type="submit">Save</button>
-                <button type="button" onClick={() => navigate(-1)}>
+            <div className="mb-3">
+                <label htmlFor="description" className="form-label">
+                    Description
+                </label>
+                <textarea
+                    className="form-control"
+                    name="description"
+                    id="description"
+                    defaultValue={task.description}
+                ></textarea>
+            </div>
+            <div className="btn-toolbar">
+                <button type="submit" className="btn btn-outline-success me-2">
+                    Save
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => navigate(-1)}
+                >
                     Cancel
                 </button>
-            </p>
+            </div>
         </Form>
     );
 }

@@ -1,28 +1,18 @@
-import {
-    Form,
-    Links,
-    LiveReload,
-    Meta,
-    NavLink,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-    useLoaderData,
-    useNavigation,
-    useSubmit,
-} from '@remix-run/react';
-
+import { Form, Link, NavLink, Outlet, useLoaderData } from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
-import { useEffect } from 'react';
 import { requireAccessToken } from '../session.server';
 import { getTasks } from '../tasks.server';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     await requireAccessToken(request);
     const url = new URL(request.url);
-    const search = url.searchParams.get('search');
-    const tasks = await getTasks(request); // add search
-    return json({ tasks, search });
+    const requestedPage = parseInt(url.searchParams.get('page') || '1');
+    const requestedLimit = 5;
+    const requestedSkip = (requestedPage - 1) * requestedLimit;
+    const { tasks, count, skip, limit } = await getTasks(request, requestedSkip, requestedLimit);
+    const totalPages = Math.ceil(count / limit);
+    const currentPage = 1 + skip / limit;
+    return json({ tasks, count, skip, limit, totalPages, currentPage });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -31,96 +21,84 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Tasks() {
-    const { tasks, search } = useLoaderData<typeof loader>();
-    const navigation = useNavigation();
-    const submit = useSubmit();
-    const searching =
-        navigation.location && new URLSearchParams(navigation.location.search).has('search');
+    const { tasks, count, skip, limit, totalPages, currentPage } = useLoaderData<typeof loader>();
 
-    useEffect(() => {
-        const searchField = document.getElementById('search');
-        if (searchField instanceof HTMLInputElement) {
-            searchField.value = search || '';
+    const getPageLinks = (totalPages: number, currentPage: number) => {
+        const links = [];
+        for (let i = 1; i <= totalPages; i++) {
+            links.push(
+                <li className={'page-item ' + (i === currentPage ? 'active' : '')}>
+                    <Link to={`/tasks?page=${i}`} className="page-link">
+                        {i}
+                    </Link>
+                </li>,
+            );
         }
-    }, [search]);
+        return links;
+    };
 
     return (
-        <html lang="en">
-            <head>
-                <meta charSet="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <Meta />
-                <Links />
-            </head>
-            <body>
-                <div id="sidebar">
-                    <h1>TryHackMe Tasks</h1>
-
-                    <Form action="/logout" method="post">
-                        <button type="submit">Logout</button>
-                    </Form>
-
-                    <div>
-                        <Form
-                            id="search-form"
-                            role="search"
-                            onChange={(event) => {
-                                const isFirstSearch = search === null;
-                                submit(event.currentTarget, {
-                                    replace: !isFirstSearch,
-                                });
-                            }}
-                        >
-                            <input
-                                id="search"
-                                className={searching ? 'loading' : ''}
-                                aria-label="Search tasks"
-                                placeholder="Search"
-                                defaultValue={search || ''}
-                                type="search"
-                                name="search"
-                            />
-                            <div aria-hidden hidden={!searching} id="search-spinner" />
-                            <div id="search-spinner" aria-hidden hidden={true} />
-                        </Form>
-                        <Form method="post">
-                            <button type="submit">New</button>
-                        </Form>
+        <div className="col-lg-8 mx-auto p-4 py-md-5">
+            <div className="mb-3 text-end">
+                <Form method="post">
+                    <div className="col">
+                        <button type="submit" className="btn btn-outline-success">
+                            <i className="bi bi-plus-circle"></i> Add a Task
+                        </button>
                     </div>
-                    <nav>
-                        {tasks.length ? (
-                            <ul>
-                                {tasks.map((task) => (
-                                    <li key={task._id}>
-                                        <NavLink
-                                            className={({ isActive, isPending }) =>
-                                                isActive ? 'active' : isPending ? 'pending' : ''
-                                            }
-                                            to={`${task._id}`}
-                                        >
-                                            {task.title}
-                                        </NavLink>
-                                    </li>
-                                ))}
+                </Form>
+            </div>
+            <Outlet />
+            <div className="mt-3">
+                {tasks.length ? (
+                    <>
+                        <ul className="list-group">
+                            {tasks.map((task) => (
+                                <li className="list-group-item" key={task._id}>
+                                    <NavLink
+                                        className={({ isActive, isPending }) =>
+                                            isActive ? 'active' : isPending ? 'pending' : ''
+                                        }
+                                        to={`${task._id}`}
+                                    >
+                                        {task.title}
+                                    </NavLink>
+                                </li>
+                            ))}
+                        </ul>
+                        <nav aria-label="Page navigation example" className="mt-3">
+                            <ul className="pagination">
+                                <li className="page-item">
+                                    <Link
+                                        to={`/tasks?page=${currentPage - 1}`}
+                                        className={
+                                            'page-link ' + (currentPage === 1 ? 'disabled' : '')
+                                        }
+                                    >
+                                        Previous
+                                    </Link>
+                                </li>
+                                {getPageLinks(totalPages, currentPage)}
+                                <li className="page-item">
+                                    <Link
+                                        to={`/tasks?page=${currentPage + 1}`}
+                                        className={
+                                            'page-link ' +
+                                            (currentPage === totalPages ? 'disabled' : '')
+                                        }
+                                    >
+                                        Next
+                                    </Link>
+                                </li>
                             </ul>
-                        ) : (
-                            <p>
-                                <i>No tasks yet</i>
-                            </p>
-                        )}
-                    </nav>
-                </div>
-                <div
-                    className={navigation.state === 'loading' && !searching ? 'loading' : ''}
-                    id="detail"
-                >
-                    <Outlet />
-                </div>
-
-                <ScrollRestoration />
-                <Scripts />
-                <LiveReload />
-            </body>
-        </html>
+                        </nav>
+                    </>
+                ) : (
+                    <p>
+                        <i>No tasks yet</i>
+                    </p>
+                )}
+            </div>
+        </div>
     );
 }
